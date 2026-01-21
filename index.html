@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Guess the President</title>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Guess the President</h1>
+        </header>
+        <main>
+            <div class="flag-display">
+                <!-- We keep the ID the same or update it to 'presidentImage' -->
+                <img src="https://via.placeholder.com/300x400?text=Loading..." alt="President Portrait" id="flagImage">
+            </div>
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <input type="text" id="guessInput" placeholder="Enter President's name...">
+                    <ul id="suggestions" class="suggestions-list"></ul>
+                </div>
+                <button id="submitGuess">Submit</button>
+            </div>
+            <div class="message" id="messageDisplay"></div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
