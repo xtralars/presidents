@@ -1,3 +1,8 @@
+function getOrdinal(n) {
+    let s = ["th", "st", "nd", "rd"],
+        v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 document.addEventListener("DOMContentLoaded", () => {
     let allPresidents = [];
     let currentPresident = null;
@@ -27,19 +32,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function startNewRound() {
-        attempts = 5;
-        selectedIndex = -1; // Reset selection
-        currentPresident = allPresidents[Math.floor(Math.random() * allPresidents.length)];
-        
-        flagImage.src = currentPresident.photo;
-        guessInput.value = "";
-        messageDisplay.textContent = "";
-        messageDisplay.style.color = "#333";
-        
-        inputSection.style.display = "flex";
-        bonusSection.style.display = "none";
-        suggestions.style.display = "none";
-    }
+    attempts = 5;
+    selectedIndex = -1;
+    currentPresident = allPresidents[Math.floor(Math.random() * allPresidents.length)];
+    
+    // 1. Get the number hint element
+    const hintDisplay = document.getElementById("presidentNumberHint");
+    
+    // 2. Set the text (e.g., "The 1st President")
+    hintDisplay.textContent = `The ${getOrdinal(currentPresident.id)} President`;
+
+    // Reset UI to Stage 1
+    flagImage.src = currentPresident.photo;
+    guessInput.value = "";
+    messageDisplay.textContent = "";
+    messageDisplay.style.color = "#333";
+    
+    inputSection.style.display = "flex";
+    bonusSection.style.display = "none";
+    suggestions.style.display = "none";
+}
 
     // --- STAGE 1: Check Name ---
     function checkName() {
@@ -156,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showVPBonus() {
         messageDisplay.textContent = "";
-        bonusQuestionText.textContent = `Who was the Vice President for ${currentPresident.name}?`;
+        bonusQuestionText.textContent = `Who was the Vice President for the ${getOrdinal(currentPresident.id)} President, ${currentPresident.name}?`;
         const correct = currentPresident.vicePresidents.join(", ");
         const options = generateChoices(correct, "vicePresidents");
         renderButtons(options, (choice) => {
