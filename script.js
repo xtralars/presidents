@@ -1,163 +1,202 @@
 document.addEventListener("DOMContentLoaded", () => {
-    let presidents = [];
-    let currentPresident;
+    let allPresidents = [];
+    let currentPresident = null;
     let attempts = 5;
-    let selectedIndex = -1; 
+    let selectedIndex = -1; // Tracks which suggestion is highlighted
 
-    const flagImage = document.getElementById("flagImage"); // Keep ID from your HTML
+    // DOM Elements
+    const flagImage = document.getElementById("flagImage");
     const guessInput = document.getElementById("guessInput");
     const submitGuess = document.getElementById("submitGuess");
     const messageDisplay = document.getElementById("messageDisplay");
     const suggestions = document.getElementById("suggestions");
+    
+    const inputSection = document.getElementById("inputSection");
+    const bonusSection = document.getElementById("bonusSection");
+    const bonusQuestionText = document.getElementById("bonusQuestionText");
+    const optionsContainer = document.getElementById("optionsContainer");
 
-    // 1. Fetch Presidents instead of Countries
-    async function fetchPresidents() {
+    async function init() {
         try {
             const response = await fetch("https://api.sampleapis.com/presidents/presidents");
-            const data = await response.json();
-            
-            // Map the API data to a simple format
-            presidents = data.map(p => ({
-                name: p.name,
-                photo: p.photo
-            }));
-            
-            resetGame();
+            allPresidents = await response.json();
+            startNewRound();
         } catch (error) {
-            console.error("Error fetching presidents:", error);
-            messageDisplay.textContent = "Failed to load president data.";
+            messageDisplay.textContent = "Error loading data.";
         }
     }
 
-    function pickRandomPresident() {
-        const randomIndex = Math.floor(Math.random() * presidents.length);
-        currentPresident = presidents[randomIndex];
-        flagImage.src = currentPresident.photo;
-        // Optional: Add an alt tag for accessibility
-        flagImage.alt = "US President Portrait";
-    }
-
-    function resetGame() {
-        if (presidents.length === 0) return;
-        
+    function startNewRound() {
         attempts = 5;
-        guessInput.value = '';
+        selectedIndex = -1; // Reset selection
+        currentPresident = allPresidents[Math.floor(Math.random() * allPresidents.length)];
+        
+        flagImage.src = currentPresident.photo;
+        guessInput.value = "";
         messageDisplay.textContent = "";
         messageDisplay.style.color = "#333";
-        pickRandomPresident();
+        
+        inputSection.style.display = "flex";
+        bonusSection.style.display = "none";
+        suggestions.style.display = "none";
     }
 
-    // 2. Updated Check Guess Logic with 5 attempts
-    function checkGuess() {
-        const userGuess = guessInput.value.trim();
-        if (!userGuess) {
-            messageDisplay.textContent = "Please enter a name!";
-            return;
-        }
+    // --- STAGE 1: Check Name ---
+    function checkName() {
+        const guess = guessInput.value.trim().toLowerCase();
+        if (!guess) return;
 
-        if (userGuess.toLowerCase() === currentPresident.name.toLowerCase()) {
+        if (guess === currentPresident.name.toLowerCase()) {
             messageDisplay.style.color = "green";
-            messageDisplay.textContent = `Correct! It is ${currentPresident.name}.`;
-            
-            // Refresh/Reset after 2 seconds
-            setTimeout(() => {
-                resetGame(); 
-            }, 2000);
+            messageDisplay.textContent = "Correct! Bonus: When did they serve?";
+            suggestions.style.display = "none";
+            setTimeout(showYearsBonus, 1500);
         } else {
-            attempts -= 1;
+            attempts--;
             if (attempts > 0) {
                 messageDisplay.style.color = "red";
-                messageDisplay.textContent = `Wrong! You have ${attempts} attempts left.`;
-                guessInput.value = ''; // Clear input for next try
+                messageDisplay.textContent = `Wrong! ${attempts} attempts left.`;
+                guessInput.value = "";
             } else {
-                messageDisplay.style.color = "red";
-                messageDisplay.textContent = `Game over! The correct answer was ${currentPresident.name}.`;
-                
-                // Refresh/Reset after 3 seconds so they can see the answer
-                setTimeout(() => {
-                    resetGame();
-                }, 3000);
+                gameOver(`Wrong! It was ${currentPresident.name}.`);
             }
         }
     }
 
-    // 3. Updated Filter Logic
-    function filterPresidents(query) {
-        return presidents
-            .map(p => p.name)
-            .filter(name => name.toLowerCase().includes(query.toLowerCase()));
-    }
-
-    function showSuggestions(matches) {
-        suggestions.innerHTML = '';
-        selectedIndex = -1;
-
-        if (matches.length === 0 || !guessInput.value.trim()) {
-            suggestions.style.display = 'none';
-            return;
-        }
-
-        // Limit suggestions to top 5 so the list isn't too long
-        matches.slice(0, 5).forEach(match => {
-            const li = document.createElement('li');
-            li.textContent = match;
-            li.addEventListener('click', () => {
-                guessInput.value = match;
-                suggestions.style.display = 'none';
-                checkGuess(); // Automatically check when they click a suggestion
-            });
-            suggestions.appendChild(li);
-        });
-
-        suggestions.style.display = 'block';
-    }
-
-    // --- Input Listeners (Kept same as your flag quiz) ---
-
-    guessInput.addEventListener("input", () => {
-        const query = guessInput.value;
-        const matches = filterPresidents(query);
-        showSuggestions(matches);
-    });
-
-    guessInput.addEventListener("keydown", (event) => {
-        const visibleSuggestions = suggestions.querySelectorAll('li');
-
-        if (event.key === "Enter") {
-            if (selectedIndex >= 0) {
-                guessInput.value = visibleSuggestions[selectedIndex].textContent;
-                suggestions.style.display = 'none';
+    // --- Suggestion Keyboard Logic ---
+    guessInput.addEventListener("keydown", (e) => {
+        const items = suggestions.querySelectorAll("li");
+        
+        if (suggestions.style.display === "block" && items.length > 0) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault(); // Stop cursor from moving
+                selectedIndex = (selectedIndex + 1) % items.length;
+                updateSuggestionHighlight(items);
+            } 
+            else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                updateSuggestionHighlight(items);
+            } 
+            else if (e.key === "Enter") {
+                if (selectedIndex >= 0) {
+                    e.preventDefault();
+                    // Fill input with highlighted suggestion
+                    guessInput.value = items[selectedIndex].textContent;
+                    suggestions.style.display = "none";
+                    checkName(); // Submit immediately
+                }
             }
-            checkGuess();
-        } else if (event.key === "ArrowDown") {
-            event.preventDefault(); // Stop page scrolling
-            selectedIndex = (selectedIndex + 1) % visibleSuggestions.length;
-            updateHighlightedSuggestion(visibleSuggestions);
-        } else if (event.key === "ArrowUp") {
-            event.preventDefault();
-            selectedIndex = (selectedIndex - 1 + visibleSuggestions.length) % visibleSuggestions.length;
-            updateHighlightedSuggestion(visibleSuggestions);
+        } else if (e.key === "Enter") {
+            checkName(); // Regular submit if no suggestions open
         }
     });
 
-    function updateHighlightedSuggestion(suggestionsList) {
-        suggestionsList.forEach((suggestion, index) => {
+    function updateSuggestionHighlight(items) {
+        items.forEach((item, index) => {
             if (index === selectedIndex) {
-                suggestion.style.backgroundColor = '#f0f0f0';
-                suggestion.scrollIntoView({ block: 'nearest' });
+                item.classList.add("selected-suggestion");
+                item.scrollIntoView({ block: "nearest" });
             } else {
-                suggestion.style.backgroundColor = '#fff';
+                item.classList.remove("selected-suggestion");
             }
         });
     }
 
-    submitGuess.addEventListener("click", checkGuess);
+    // --- Suggestion Filtering ---
+    guessInput.addEventListener("input", () => {
+        const val = guessInput.value.toLowerCase();
+        suggestions.innerHTML = "";
+        selectedIndex = -1; // Reset highlight on new typing
 
-    document.addEventListener('click', (e) => {
-        if (!guessInput.contains(e.target) && !suggestions.contains(e.target)) {
-            suggestions.style.display = 'none';
+        if (!val) { 
+            suggestions.style.display = "none"; 
+            return; 
+        }
+        
+        const matches = allPresidents
+            .filter(p => p.name.toLowerCase().includes(val))
+            .slice(0, 6); // Show top 6 matches
+
+        if (matches.length > 0) {
+            matches.forEach((m, idx) => {
+                const li = document.createElement("li");
+                li.textContent = m.name;
+                li.addEventListener("click", () => {
+                    guessInput.value = m.name;
+                    suggestions.style.display = "none";
+                    checkName();
+                });
+                suggestions.appendChild(li);
+            });
+            suggestions.style.display = "block";
+        } else {
+            suggestions.style.display = "none";
         }
     });
 
-    fetchPresidents();
+    // --- STAGE 2 & 3 Logic (Keep existing) ---
+    function showYearsBonus() {
+        inputSection.style.display = "none";
+        bonusSection.style.display = "block";
+        messageDisplay.textContent = "";
+        bonusQuestionText.textContent = `Which years did ${currentPresident.name} serve?`;
+        const correct = currentPresident.yearsInOffice;
+        const options = generateChoices(correct, "yearsInOffice");
+        renderButtons(options, (choice) => {
+            if (choice === correct) {
+                messageDisplay.style.color = "green";
+                messageDisplay.textContent = "Correct! Final Bonus: Who was the VP?";
+                setTimeout(showVPBonus, 1500);
+            } else {
+                gameOver(`Wrong! They served ${correct}.`);
+            }
+        });
+    }
+
+    function showVPBonus() {
+        messageDisplay.textContent = "";
+        bonusQuestionText.textContent = `Who was the Vice President for ${currentPresident.name}?`;
+        const correct = currentPresident.vicePresidents.join(", ");
+        const options = generateChoices(correct, "vicePresidents");
+        renderButtons(options, (choice) => {
+            if (choice === correct) {
+                messageDisplay.style.color = "green";
+                messageDisplay.textContent = "Amazing! You got them all correct!";
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                gameOver(`Wrong! The VP was ${correct}.`);
+            }
+        });
+    }
+
+    function generateChoices(correctValue, key) {
+        let choices = [correctValue];
+        while (choices.length < 4) {
+            let rand = allPresidents[Math.floor(Math.random() * allPresidents.length)];
+            let val = Array.isArray(rand[key]) ? rand[key].join(", ") : rand[key];
+            if (val && !choices.includes(val)) choices.push(val);
+        }
+        return choices.sort(() => Math.random() - 0.5);
+    }
+
+    function renderButtons(options, callback) {
+        optionsContainer.innerHTML = "";
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.textContent = opt;
+            btn.className = "bonus-btn";
+            btn.onclick = () => callback(opt);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function gameOver(msg) {
+        messageDisplay.style.color = "red";
+        messageDisplay.textContent = msg;
+        setTimeout(() => location.reload(), 3000);
+    }
+
+    submitGuess.onclick = checkName;
+    init();
 });
