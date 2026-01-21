@@ -12,17 +12,29 @@
             <h1>Guess the President</h1>
         </header>
         <main>
+            <!-- 1. The Image -->
             <div class="flag-display">
-                <!-- We keep the ID the same or update it to 'presidentImage' -->
                 <img src="https://via.placeholder.com/300x400?text=Loading..." alt="President Portrait" id="flagImage">
             </div>
-            <div class="input-section">
+
+            <!-- 2. STAGE 1: Guessing the Name (Text Input) -->
+            <div class="input-section" id="inputSection">
                 <div class="input-wrapper">
                     <input type="text" id="guessInput" placeholder="Enter President's name...">
                     <ul id="suggestions" class="suggestions-list"></ul>
                 </div>
                 <button id="submitGuess">Submit</button>
             </div>
+
+            <!-- 3. STAGE 2 & 3: Bonus Questions (Multiple Choice) -->
+            <div id="bonusSection" style="display: none; text-align: center; margin-bottom: 20px;">
+                <p id="bonusQuestionText" style="font-weight: bold; margin-bottom: 10px;"></p>
+                <div id="optionsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <!-- Choice buttons will be injected here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- 4. Feedback Message -->
             <div class="message" id="messageDisplay"></div>
         </main>
     </div>
