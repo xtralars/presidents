@@ -103,3 +103,51 @@ header {
 .suggestions-list li:hover {
     background-color: #f0f0f0;
 }
+.bonus-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.bonus-btn:hover {
+    background-color: #0056b3;
+}
+
+#bonusSection h3 {
+    color: #444;
+    font-size: 1.1em;
+}
+
+/* Styling for the suggestion list item when navigated by keyboard */
+.suggestions-list li.selected-suggestion {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Ensure the suggestions list can be scrolled if too many appear */
+.suggestions-list {
+    max-height: 200px;
+    overflow-y: auto;
+    /* other existing styles... */
+}
+
+/* Style for bonus buttons from previous step */
+.bonus-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.bonus-btn:hover {
+    background-color: #0056b3;
+}
